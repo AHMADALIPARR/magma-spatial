@@ -1,0 +1,90 @@
+<!doctype html>
+<!-- Copyright (C) 2026 Bel Esprit D'Accord Irrevocable Trust / SnapKitty Collective Limited -->
+<!-- Dual-licensed: AGPL-3.0-only plus SnapKitty Opaque License. -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only AND LicenseRef-SnapKitty-Opaque -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAGMA — Piet Spatial Front End</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: system-ui, sans-serif; background: #101014; color: #e8e8ec;
+         margin: 0; padding: 16px; }
+  header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: 1px; }
+  .status { font-size: 12px; color: #9a9aa5; }
+  .status b { color: #7ee787; font-weight: 600; }
+  .status b.off { color: #f0883e; }
+  main { display: grid; grid-template-columns: minmax(320px, 560px) 1fr; gap: 16px; margin-top: 12px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .panel { background: #17171d; border: 1px solid #26262e; border-radius: 8px; padding: 12px; }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+              color: #9a9aa5; margin: 0 0 8px; }
+  #palette { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .swatch { border: 2px solid transparent; border-radius: 6px; padding: 5px 9px;
+            cursor: pointer; font: 13px ui-monospace, monospace; color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  .swatch.selected { border-color: #fff; }
+  .swatch.eraser { background: #26262e; color: #9a9aa5; text-shadow: none; }
+  #grid { display: grid; gap: 2px; user-select: none; touch-action: none; }
+  #grid .cell { aspect-ratio: 1; border-radius: 3px; background: #1e1e26; cursor: crosshair; }
+  #grid .cell:hover { outline: 1px solid #55555f; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  button.act { background: #26262e; color: #e8e8ec; border: 1px solid #3a3a44;
+               border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  button.act:hover { background: #2f2f39; }
+  pre, .mono { font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { white-space: pre-wrap; word-break: break-all; margin: 0; max-height: 46vh; overflow: auto; }
+  #bf { font-size: 14px; word-break: break-all; }
+  #stats { font-size: 13px; }
+  #stats .err { color: #ff7b72; }
+  #lanes { display: flex; flex-direction: column; gap: 4px; }
+  .lane { display: grid; grid-template-columns: 64px 1fr 90px; gap: 8px; align-items: center;
+          font: 12px ui-monospace, monospace; }
+  .lane .bar { height: 10px; background: #26262e; border-radius: 3px; overflow: hidden; }
+  .lane .fill { height: 100%; background: #1E88E5; }
+  .lane .fill.neg { background: #E53935; }
+  .tap { color: #c792ea; }
+  .hint { font-size: 12px; color: #9a9aa5; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>MAGMA</h1>
+  <div>Piet 2D spatial front end — the picture is the program; the snake path reads it.</div>
+  <div class="status" id="status">engines: <b class="off" id="st-wasm">wasm…</b> · <b class="off" id="st-ws">websocket…</b></div>
+</header>
+<main>
+  <section class="panel">
+    <h2>Spatial program</h2>
+    <div id="palette"></div>
+    <div id="grid"></div>
+    <div class="row">
+      <button class="act" id="btn-example">Load example</button>
+      <button class="act" id="btn-clear">Clear</button>
+      <label>width
+        <select id="width">
+          <option>12</option><option>16</option><option selected>24</option><option>32</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint">Paint blocks to write the program. Keys 1–5 pick a color,
+      E erases; the command keys <span class="mono">+ - &gt; &lt; .</span> paint directly.
+      Reading order snakes: row 1 left→right, row 2 right→left, alternating.
+      Compilation is instant in WASM; the grid is shared live over the WebSocket —
+      open this page twice and paint in one.</p>
+    <h2 style="margin-top:14px">Brainfuck stream</h2>
+    <div id="bf" class="mono">(empty)</div>
+    <h2 style="margin-top:14px">Result</h2>
+    <div id="stats">—</div>
+    <div id="lanes" style="margin-top:8px"></div>
+  </section>
+  <section class="panel">
+    <h2>Verilog — combinational lanes, no program counter</h2>
+    <pre id="verilog">// compile something</pre>
+  </section>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
