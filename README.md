@@ -46,6 +46,34 @@ programs. `tests/smoke.sh` is the original end-to-end check.
 - `src/error.rs` — compile diagnostics.
 - `src/main.rs` — the `compile` command-line interface.
 
+## Front end — Piet 2D spatial, WASM, WebSockets
+
+The front end is a 2D spatial surface in the spirit of Piet: the
+program is a field of colored blocks, read along a continuous
+snake path (row 1 left-to-right, row 2 right-to-left, alternating).
+Each color is one Brainfuck command — the palette lives in
+`src/piet.rs` and is the single source of truth. This is a spatial
+notation for MAGMA programs, not the Piet language itself (no
+direction pointer or stack).
+
+```sh
+sh web/build-wasm.sh                    # builds web/magma.wasm
+cargo run --release --bin magma-server  # serves web/ on 127.0.0.1:8765
+```
+
+Open the page and paint. Compilation runs locally in WebAssembly
+(the library compiled to `web/magma.wasm`, hand-rolled C ABI in
+`src/wasm.rs`, no bindgen); a WebSocket channel (RFC 6455,
+hand-rolled on std only in `src/ws.rs` / `src/server.rs`) shares
+the grid, its Brainfuck stream, and its compile report with every
+connected browser, so several people can watch and edit the same
+spatial program live. Either engine works alone: no server means
+WASM-only, no WASM means the server compiles.
+
+Checks: `cargo test` includes a live server end-to-end test
+(`tests/server_e2e.rs`); `node web/test-wasm.mjs` verifies the
+WASM module's output against the native compiler.
+
 ## Next integration stages
 
 1. Represent SUBLEQ signed arithmetic and branch selection as hardware control/dataflow nodes.
