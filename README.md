@@ -61,7 +61,14 @@ sh web/build-wasm.sh                    # builds web/magma.wasm
 cargo run --release --bin magma-server  # serves web/ on 127.0.0.1:8765
 ```
 
-Open the page and paint. Compilation runs locally in WebAssembly
+Open the page and paint. Three views of the one program, all
+computed by the library itself: the grid (the program as a
+picture); a Turing machine (`src/turing.rs`, full Brainfuck —
+tape, head, step/run transport, output tray) that *runs* the
+program, including the loops the spatial stage cannot compile
+yet; and the MAGMA datapath drawn as a live diagram whose outputs
+compute from the input values you set. No code blocks are shown:
+the netlist is a download, not a panel. Compilation runs locally in WebAssembly
 (the library compiled to `web/magma.wasm`, hand-rolled C ABI in
 `src/wasm.rs`, no bindgen); a WebSocket channel (RFC 6455,
 hand-rolled on std only in `src/ws.rs` / `src/server.rs`) shares

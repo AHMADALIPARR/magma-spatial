@@ -66,6 +66,35 @@ const pal = JSON.parse(dec.decode(mem().subarray(palPtr, palPtr + palLen)));
 check('palette has 5 entries', Array.isArray(pal.palette) && pal.palette.length === 5);
 check('palette maps + to red', pal.palette[0].command === '+' && pal.palette[0].hex === '#E53935');
 
+// 6. Turing machine: start + stateless stepping runs full BF,
+// including a loop program MAGMA's combinational stage rejects.
+function turingRunToHalt(bf, chunk) {
+  let st = callString(ex.magma_turing_start, bf);
+  let guard = 0;
+  while ((!st.halt || st.halt === 'step-limit') && guard < 1000) {
+    const input = enc.encode(bf);
+    const stateIn = enc.encode(JSON.stringify(st));
+    const bp = ex.magma_alloc(input.length);
+    const sp = ex.magma_alloc(stateIn.length);
+    mem().set(input, bp); mem().set(stateIn, sp);
+    const packed = ex.magma_turing_step(bp, input.length, sp, stateIn.length, chunk);
+    const outPtr = Number(packed >> 32n), outLen = Number(packed & 0xffffffffn);
+    st = JSON.parse(dec.decode(mem().subarray(outPtr, outPtr + outLen)));
+    ex.magma_free(bp, input.length); ex.magma_free(sp, stateIn.length);
+    guard += 1;
+  }
+  return st;
+}
+const moved = turingRunToHalt('++[>+<-]', 3);
+check('turing loop program', moved.halt === 'end' && moved.tape[0] === 0 && moved.tape[1] === 2,
+  JSON.stringify(moved));
+const example = turingRunToHalt('+++>+++++>--.<.<.', 5);
+check('turing example tape+output',
+  JSON.stringify(example.tape) === '[3,5,65534]' && JSON.stringify(example.output) === '[65534,5,3]',
+  JSON.stringify(example));
+const runaway = turingRunToHalt('+[]', 500);
+check('turing step limit', runaway.halt === 'step-limit' && runaway.steps >= 500, JSON.stringify(runaway).slice(0, 120));
+
 if (failures > 0) {
   console.error(`${failures} check(s) failed`);
   process.exit(1);

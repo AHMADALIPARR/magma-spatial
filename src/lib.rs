@@ -18,6 +18,7 @@ pub mod lower;
 pub mod parse;
 pub mod piet;
 pub mod server;
+pub mod turing;
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;
 pub mod ws;

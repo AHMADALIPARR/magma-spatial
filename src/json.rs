@@ -79,6 +79,23 @@ fn parse_string(s: &str) -> Option<String> {
     }
 }
 
+/// Extract an array of u16 values stored under `key`
+/// (`"key":[1,2,3]`). Returns `None` if absent or malformed.
+pub fn get_u16_array(json: &str, key: &str) -> Option<Vec<u16>> {
+    let needle = format!("\"{key}\"");
+    let at = json.find(&needle)?;
+    let after = json[at + needle.len()..].trim_start().strip_prefix(':')?;
+    let after = after.trim_start().strip_prefix('[')?;
+    let end = after.find(']')?;
+    let body = after[..end].trim();
+    if body.is_empty() {
+        return Some(Vec::new());
+    }
+    body.split(',')
+        .map(|part| part.trim().parse::<u16>().ok())
+        .collect()
+}
+
 /// Extract the numeric value of `key` from a flat JSON object.
 /// Returns `None` if the key is absent or not a number.
 pub fn get_number(json: &str, key: &str) -> Option<f64> {

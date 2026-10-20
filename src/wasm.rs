@@ -101,3 +101,56 @@ pub extern "C" fn magma_bf_to_grid(ptr: *const u8, len: usize, width: usize) -> 
 pub extern "C" fn magma_palette() -> u64 {
     set_result(format!("{{\"palette\":{}}}", crate::piet::palette_json()))
 }
+
+/// Parse a saved halt reason from a machine state JSON string.
+fn parse_halt(state: &str) -> Option<crate::turing::Halt> {
+    use crate::turing::Halt;
+    match crate::json::get_string(state, "halt").as_deref() {
+        Some("end") => Some(Halt::End),
+        Some("tape-underflow") => Some(Halt::TapeUnderflow),
+        Some("step-limit") => Some(Halt::StepLimit),
+        Some("bad-program") => Some(Halt::BadProgram),
+        _ => None,
+    }
+}
+
+/// Start a Turing machine on a Brainfuck program:
+/// returns the initial machine state JSON.
+#[no_mangle]
+pub extern "C" fn magma_turing_start(ptr: *const u8, len: usize) -> u64 {
+    match input(ptr, len) {
+        Some(source) => set_result(crate::turing::Machine::new(&source).to_json()),
+        None => bad_input(),
+    }
+}
+
+/// Advance a Turing machine: inputs are the program text, a saved
+/// state JSON (from `magma_turing_start` or a previous step), and
+/// a step budget. Returns the new state JSON. The stepping logic
+/// is the library's [`crate::turing::Machine`]; this is a pure
+/// state-in/state-out call.
+#[no_mangle]
+pub extern "C" fn magma_turing_step(
+    bf_ptr: *const u8,
+    bf_len: usize,
+    state_ptr: *const u8,
+    state_len: usize,
+    max_steps: u32,
+) -> u64 {
+    let (Some(source), Some(state)) = (input(bf_ptr, bf_len), input(state_ptr, state_len)) else {
+        return bad_input();
+    };
+    let num = |key: &str| crate::json::get_number(&state, key).unwrap_or(0.0);
+    let mut machine = crate::turing::Machine::resume(
+        &source,
+        crate::json::get_u16_array(&state, "tape").unwrap_or_default(),
+        num("head") as usize,
+        num("ip") as usize,
+        crate::json::get_u16_array(&state, "input").unwrap_or_default(),
+        crate::json::get_u16_array(&state, "output").unwrap_or_default(),
+        num("steps") as u64,
+        parse_halt(&state),
+    );
+    machine.run(max_steps as u64);
+    set_result(machine.to_json())
+}
