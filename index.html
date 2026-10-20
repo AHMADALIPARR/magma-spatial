@@ -1,0 +1,139 @@
+<!doctype html>
+<!-- Copyright (C) 2026 Bel Esprit D'Accord Irrevocable Trust / SnapKitty Collective Limited -->
+<!-- Dual-licensed: AGPL-3.0-only plus SnapKitty Opaque License. -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only AND LicenseRef-SnapKitty-Opaque -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAGMA — Piet Spatial Front End</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: system-ui, sans-serif; background: #101014; color: #e8e8ec;
+         margin: 0; padding: 16px; }
+  header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: 1px; }
+  .status { font-size: 12px; color: #9a9aa5; }
+  .status b { color: #7ee787; font-weight: 600; }
+  .status b.off { color: #f0883e; }
+  main { display: grid; grid-template-columns: minmax(320px, 520px) 1fr; gap: 16px; margin-top: 12px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .panel { background: #17171d; border: 1px solid #26262e; border-radius: 8px; padding: 12px; }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+              color: #9a9aa5; margin: 0 0 8px; }
+  #palette { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .swatch { border: 2px solid transparent; border-radius: 6px; padding: 5px 9px;
+            cursor: pointer; font: 13px ui-monospace, monospace; color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  .swatch.selected { border-color: #fff; }
+  .swatch.eraser { background: #26262e; color: #9a9aa5; text-shadow: none; }
+  #grid { display: grid; gap: 2px; user-select: none; touch-action: none; }
+  #grid .cell { aspect-ratio: 1; border-radius: 3px; background: #1e1e26; cursor: crosshair; }
+  #grid .cell:hover { outline: 1px solid #55555f; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  button.act { background: #26262e; color: #e8e8ec; border: 1px solid #3a3a44;
+               border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  button.act:hover { background: #2f2f39; }
+  button.act:disabled { opacity: .45; cursor: default; }
+  #stats { font-size: 13px; color: #c9c9d1; }
+  #stats .err { color: #ff7b72; }
+  .hint { font-size: 12px; color: #9a9aa5; margin-top: 8px; }
+  /* Turing tape */
+  #tapewrap { overflow-x: auto; padding: 14px 2px 4px; }
+  #tape { display: flex; gap: 3px; width: max-content; }
+  .tcell { min-width: 46px; text-align: center; background: #1e1e26;
+           border: 1px solid #2c2c36; border-radius: 5px; padding: 5px 2px 3px;
+           font: 13px ui-monospace, monospace; position: relative; }
+  .tcell .idx { display: block; font-size: 9px; color: #6d6d78; }
+  .tcell.head { border-color: #7ee787; background: #1d2b1d; }
+  .tcell.head::before { content: "▼ head"; position: absolute; top: -13px; left: 0;
+           right: 0; font-size: 9px; color: #7ee787; }
+  .tcell.changed { border-color: #f0883e; }
+  #output { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; min-height: 24px; }
+  .out-chip { background: #3a1c4d; border: 1px solid #8E24AA; color: #e8e8ec;
+           border-radius: 12px; padding: 2px 9px; font: 12px ui-monospace, monospace; }
+  .machine-state { font: 12px ui-monospace, monospace; color: #c9c9d1; }
+  input[type="number"] { width: 76px; background: #1e1e26; color: #e8e8ec;
+           border: 1px solid #3a3a44; border-radius: 5px; padding: 4px 6px; }
+  /* datapath diagram */
+  #diagram { width: 100%; height: auto; display: block; }
+  .wire { stroke: #4a4a58; stroke-width: 2; fill: none; }
+  .flow { stroke: #7ee787; stroke-width: 2; fill: none; stroke-dasharray: 5 7;
+          animation: dash 1.2s linear infinite; opacity: .8; }
+  @keyframes dash { to { stroke-dashoffset: -12; } }
+  .node-in, .node-out { fill: #1e1e26; stroke: #3a3a44; }
+  .adder { fill: #14324f; stroke: #1E88E5; }
+  .tapbox { fill: #3a1c4d; stroke: #8E24AA; }
+  svg text { fill: #e8e8ec; font-family: ui-monospace, Menlo, monospace; }
+  svg .lbl { fill: #9a9aa5; font-size: 10px; font-family: system-ui, sans-serif; }
+  .inval { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .inval label { font: 12px ui-monospace, monospace; color: #c9c9d1;
+                 display: flex; align-items: center; gap: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>MAGMA</h1>
+  <div>Piet 2D spatial front end — paint the program, run the machine, see the datapath.</div>
+  <div class="status" id="status">engines: <b class="off" id="st-wasm">wasm…</b> · <b class="off" id="st-ws">websocket…</b></div>
+</header>
+<main>
+  <section class="panel">
+    <h2>Spatial program</h2>
+    <div id="palette"></div>
+    <div id="grid"></div>
+    <div class="row">
+      <button class="act" id="btn-example">Load example</button>
+      <button class="act" id="btn-clear">Clear</button>
+      <label>width
+        <select id="width">
+          <option>12</option><option>16</option><option selected>24</option><option>32</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint">Paint blocks to write the program. Keys 1–5 pick a color,
+      E erases; the command keys paint directly. Reading order snakes:
+      row 1 left→right, row 2 right→left, alternating. The grid is shared
+      live over the WebSocket — open this page twice and paint in one.</p>
+    <div id="stats">—</div>
+  </section>
+  <div class="col">
+    <section class="panel">
+      <h2>Turing machine — the program, running</h2>
+      <div id="tapewrap"><div id="tape"></div></div>
+      <div class="row">
+        <button class="act" id="btn-step">Step</button>
+        <button class="act" id="btn-run">Run</button>
+        <button class="act" id="btn-reset">Reset</button>
+        <label>speed
+          <select id="speed">
+            <option value="slow">slow</option>
+            <option value="medium" selected>medium</option>
+            <option value="fast">fast</option>
+          </select>
+        </label>
+        <span class="machine-state" id="mstate">no machine</span>
+      </div>
+      <div class="row">
+        <label>queue input <input type="number" id="input-val" value="0" min="0" max="65535"></label>
+        <button class="act" id="btn-input">Queue</button>
+        <span class="hint" style="margin:0">values for the machine's input reads</span>
+      </div>
+      <h2 style="margin-top:12px">Output</h2>
+      <div id="output"><span class="hint" style="margin:0">nothing printed yet</span></div>
+    </section>
+    <section class="panel">
+      <h2>MAGMA datapath — the program, compiled to space</h2>
+      <svg id="diagram" role="img" aria-label="Datapath diagram"></svg>
+      <div class="inval" id="inval"></div>
+      <div class="row">
+        <button class="act" id="btn-download">Download the Verilog</button>
+        <span class="hint" style="margin:0">the netlist is a file, not a panel</span>
+      </div>
+    </section>
+  </div>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
