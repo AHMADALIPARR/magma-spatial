@@ -1,5 +1,14 @@
 # MAGMA Spatial Compiler
 
+[![Live front end](https://img.shields.io/badge/front%20end-live%20on%20GitHub%20Pages-2ea44f)](https://ahmadaliparr.github.io/magma-spatial/)
+[![License](https://img.shields.io/badge/license-AGPL--3.0--only%20%2B%20SnapKitty%20Opaque-1f6feb)](https://github.com/AHMADALIPARR/magma-spatial)
+[![Rust](https://img.shields.io/badge/rust-1.75-ce412b?logo=rust)](https://www.rust-lang.org)
+[![Tests](https://img.shields.io/badge/cargo%20test-56%20passing-2ea44f)](https://github.com/AHMADALIPARR/magma-spatial)
+
+[![The MAGMA front end: the painted spatial program after a full Turing-machine run — tape [3, 5, 65534], output 65534 / 5 / 3, and the compiled datapath below it](docs/frontend.png)](https://ahmadaliparr.github.io/magma-spatial/)
+
+*The front end is the picture: paint the program, run the machine, see the datapath. Click the photo to open the live, interactive front end on GitHub Pages.*
+
 An executable Rust prototype that compiles statically-addressed Brainfuck into parallel, combinational Verilog lanes. No C, Python, JavaScript, runtime interpreter, or program counter in generated RTL.
 
 ## Build

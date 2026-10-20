@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright (C) 2026 Bel Esprit D'Accord Irrevocable Trust / SnapKitty Collective Limited
+# Dual-licensed: AGPL-3.0-only plus SnapKitty Opaque License.
+# SPDX-License-Identifier: AGPL-3.0-only AND LicenseRef-SnapKitty-Opaque
 set -eu
 cargo run --quiet -- compile examples/parallel.bf /tmp/magma_test.v
 # Initial values: 0,0,0 => final values 3,5,65534.

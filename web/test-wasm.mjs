@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Bel Esprit D'Accord Irrevocable Trust / SnapKitty Collective Limited
+// Dual-licensed: AGPL-3.0-only plus SnapKitty Opaque License.
+// SPDX-License-Identifier: AGPL-3.0-only AND LicenseRef-SnapKitty-Opaque
 // MAGMA WASM check: instantiate web/magma.wasm in Node and verify
 // its compile output against the natively compiled golden file.
 // Usage: node web/test-wasm.mjs [path-to-golden-parallel.v]

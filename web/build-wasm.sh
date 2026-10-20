@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright (C) 2026 Bel Esprit D'Accord Irrevocable Trust / SnapKitty Collective Limited
+# Dual-licensed: AGPL-3.0-only plus SnapKitty Opaque License.
+# SPDX-License-Identifier: AGPL-3.0-only AND LicenseRef-SnapKitty-Opaque
 # Build the WebAssembly front-end module into web/magma.wasm.
 # Uses the workspace Rust toolchain (system cargo works too, as
 # long as the wasm32-unknown-unknown target is installed).
