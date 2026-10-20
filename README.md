@@ -27,8 +27,24 @@ This is **not** a complete Brainfuck implementation, SUBLEQ compiler, occam comp
 ## Tests
 
 ```sh
+cargo test
 sh tests/smoke.sh
 ```
+
+`cargo test` runs the unit tests in each module, the CLI contract
+tests in `tests/cli.rs` (exit codes and diagnostics), and the
+differential test in `tests/differential.rs`, which evaluates the
+generated Verilog as arithmetic against a reference straight-line
+Brainfuck interpreter on the shipped example and on randomized
+programs. `tests/smoke.sh` is the original end-to-end check.
+
+## Layout
+
+- `src/parse.rs` — static pointer resolution and source scanning.
+- `src/lower.rs` — per-cell write combination and output taps.
+- `src/codegen.rs` — Verilog emission.
+- `src/error.rs` — compile diagnostics.
+- `src/main.rs` — the `compile` command-line interface.
 
 ## Next integration stages
 
